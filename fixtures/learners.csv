@@ -1,0 +1,4 @@
+learner_id,enrolled_courses,purchased_materials,preferred_difficulty,preferred_kinds,ratings
+learner-aya,course-sashiko;course-tote,,beginner,fabric;toolkit,fabric=4.9;toolkit=4.6;semi_finished=4.1
+learner-bo,course-doll,mat-cotton,intermediate,semi_finished;fabric,fabric=4.7;toolkit=3.8;semi_finished=4.8
+
