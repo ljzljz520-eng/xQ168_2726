@@ -21,6 +21,18 @@ var (
 	ErrInvalidTransition = errors.New("invalid status transition")
 )
 
+// allowedTransitions defines the legal forward state machine for a material
+// request business document. A document flows draft -> submitted -> completed,
+// optionally landing in archived. Archived is terminal: no status can be
+// reached from it, which prevents archived documents from being reopened and
+// pushed back into the completed work list.
+var allowedTransitions = map[Status]map[Status]bool{
+	StatusDraft:     {StatusSubmitted: true},
+	StatusSubmitted: {StatusCompleted: true, StatusArchived: true},
+	StatusCompleted: {StatusArchived: true},
+	StatusArchived:  {},
+}
+
 type Document struct {
 	ID        string `json:"id"`
 	LearnerID string `json:"learner_id"`
@@ -87,8 +99,21 @@ func (s *StatusService) Transition(id string, target Status) error {
 	if err != nil {
 		return err
 	}
+	if !canTransition(document.Status, target) {
+		return fmt.Errorf("%w: %s -> %s", ErrInvalidTransition, document.Status, target)
+	}
 	document.Status = target
 	return s.store.Save(document)
+}
+
+// canTransition reports whether moving a document from one status to another is
+// permitted by the allowedTransitions table.
+func canTransition(from, to Status) bool {
+	allowed, ok := allowedTransitions[from]
+	if !ok {
+		return false
+	}
+	return allowed[to]
 }
 
 func (s *StatusService) CompletedDocuments() []Document {
