@@ -87,8 +87,24 @@ func (s *StatusService) Transition(id string, target Status) error {
 	if err != nil {
 		return err
 	}
+	if !canTransition(document.Status, target) {
+		return fmt.Errorf("%w: %s to %s", ErrInvalidTransition, document.Status, target)
+	}
 	document.Status = target
 	return s.store.Save(document)
+}
+
+func canTransition(current, target Status) bool {
+	switch current {
+	case StatusDraft:
+		return target == StatusSubmitted
+	case StatusSubmitted:
+		return target == StatusCompleted
+	case StatusCompleted:
+		return target == StatusArchived
+	default:
+		return false
+	}
 }
 
 func (s *StatusService) CompletedDocuments() []Document {
